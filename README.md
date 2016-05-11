@@ -23,16 +23,23 @@ Next, include the namespace by typing:
 using FlicSharp;
 
 //Create one single button and link event handler
+
 FlicButton a = new FlicButton("Light", 12554, "80:E4:DA:71:08:0E");
+
 a.SinglePressed += A_SinglePressed;
+
 a.DoublePressed += A_DoublePressed;
+
 a.Hold += A_Hold;
 
 //Create a FlicClient connected to the official Daemon and link event handler
+
 FlicClient f = new FlicClient("192.168.0.3");
+
 f.Info += F_Info;
 
 //Connect your Flic to the Daemon
+
 f.ConnectFlic(a, LatencyMode.Normal, 511);
 
 #Troubleshooting
