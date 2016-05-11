@@ -1,0 +1,9 @@
+C:\Users\IEUser\Desktop\FlicLib\FlicLib\bin\Debug\FlicLib.dll
+C:\Users\IEUser\Desktop\FlicLib\FlicLib\bin\Debug\FlicLib.pdb
+C:\Users\IEUser\Desktop\FlicLib\FlicLib\obj\Debug\FlicLib.dll
+C:\Users\IEUser\Desktop\FlicLib\FlicLib\obj\Debug\FlicLib.pdb
+F:\FlicSharp-master\FlicLib\bin\Debug\FlicLib.dll
+F:\FlicSharp-master\FlicLib\bin\Debug\FlicLib.pdb
+F:\FlicSharp-master\FlicLib\obj\Debug\FlicLib.dll
+F:\FlicSharp-master\FlicLib\obj\Debug\FlicLib.pdb
+F:\FlicSharp-master\FlicLib\obj\Debug\FlicLib.csprojResolveAssemblyReference.cache
