@@ -11,11 +11,39 @@ namespace FlicSharp
 {
     public class FlicClient
     {
-        public delegate void FlicDaemonEvent(EvtGetInfoResponse egir);
-        public delegate void ConnectedToDaemon();
+        //Delegates
+        public delegate void FlicAdvertisementPacket(EvtAdvertisementPacket eap);
+        public delegate void FlicCreateConnectionChannelResponse(EvtCreateConnectionChannelResponse ecccr);
+        public delegate void FlicConnectionStatusChanged(EvtConnectionStatusChanged ecsc);
+        public delegate void FlicConnectionChannelRemoved(EvtConnectionChannelRemoved eccr);
+        public delegate void FlicButtonUpOrDown(EvtButtonUpOrDown ebuod);
+        public delegate void FlicButtonClickOrHold(EvtButtonClickOrHold ebcoh);
+        public delegate void FlicButtonSingleOrDoubleClick(EvtButtonSingleOrDoubleClick ebsodc);
+        public delegate void FlicButtonSingleOrDoubleClickOrHold(EvtButtonSingleOrDoubleClickOrHold ebsodcoh);
+        public delegate void FlicNewVerifiedButton(EvtNewVerifiedButton envb);        
+        public delegate void FlicGetInfoResponse(EvtGetInfoResponse egir);
+        public delegate void FlicNoSpaceForNewConnection(EvtNoSpaceForNewConnection ensfnc);
+        public delegate void FlicGotSpaceForNewConnection(EvtGotSpaceForNewConnection egsfnc);
+        public delegate void FlicBluetoothControllerStateChange(EvtBluetoothControllerStateChange ebcsc);
+        public delegate void FlicPingResponse(EvtPingResponse evr);
 
-        private Socket SOCKET { get; set; } //Communicationchannel from Client to Daemon
-        public event FlicDaemonEvent Info;
+        //Events
+        public event FlicAdvertisementPacket AdvertisementPacket;
+        public event FlicCreateConnectionChannelResponse CreateConnectionChannelResponse;
+        public event FlicConnectionStatusChanged ConnectionStatusChanged;
+        public event FlicConnectionChannelRemoved ConnectionChannelRemoved;
+        public event FlicButtonUpOrDown ButtonUpOrDown;
+        public event FlicButtonClickOrHold ButtonClickOrHold;
+        public event FlicButtonSingleOrDoubleClick ButtonSingleOrDoubleClick;
+        public event FlicButtonSingleOrDoubleClickOrHold ButtonSingleOrDoubleClickOrHold;
+        public event FlicNewVerifiedButton NewVerifiedButton;
+        public event FlicGetInfoResponse GetInfoResponse;
+        public event FlicNoSpaceForNewConnection NoSpaceForNewConnection;
+        public event FlicGotSpaceForNewConnection GotSpaveForNewConnection;
+        public event FlicBluetoothControllerStateChange BluetoothControllerStateChange;
+        public event FlicPingResponse PingResponse;
+
+        private Socket SOCKET { get; set; } //Communicationchannel from Client to Daemon        
 
         public List<FlicButton> BUTTONS { get; set; }   //A list holding the added buttons
         public bool CONNECTED { get; set; } //Indicates the connectionstatus to the daemon
@@ -40,16 +68,19 @@ namespace FlicSharp
             }
         }
 
-        public void GetDaemonInfo()
-        {
-            byte[] buffer = new byte[3];
-            //Header length
-            buffer[0] = 0x01;
-            buffer[1] = 0x00;
-            //OP Code
-            buffer[2] = 0x00;
+        #region Commands
+        // OP = 0
+        public void GetInfo()
+        {            
             try
             {
+                byte[] buffer = new byte[3];
+                //Header length
+                buffer[0] = 0x01;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdGetInfo);
+                //Send data
                 SOCKET.Send(buffer, buffer.Length, 0);
             }
             catch (Exception ex)
@@ -57,6 +88,232 @@ namespace FlicSharp
                 throw ex;
             }
         }
+
+        // OP = 1
+        public void CreateScanner(UInt32 scanner_id)
+        {
+            try
+            {
+                byte[] buffer = new byte[7];
+                //Header length
+                buffer[0] = 0x05;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdCreateScanner);
+                //Ping ID
+                byte[] scanner_id_buffer = BitConverter.GetBytes(scanner_id);
+                Array.Reverse(scanner_id_buffer);
+                buffer[3] = scanner_id_buffer[0];
+                buffer[4] = scanner_id_buffer[1];
+                buffer[5] = scanner_id_buffer[2];
+                buffer[6] = scanner_id_buffer[3];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 2
+        public void RemoveScanner(UInt32 scanner_id)
+        {
+            try
+            {
+                byte[] buffer = new byte[7];
+                //Header length
+                buffer[0] = 0x05;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdRemoveScanner);
+                //Ping ID
+                byte[] ping_id_buffer = BitConverter.GetBytes(scanner_id);
+                Array.Reverse(ping_id_buffer);  //Make it little endian
+                buffer[3] = ping_id_buffer[0];
+                buffer[4] = ping_id_buffer[1];
+                buffer[5] = ping_id_buffer[2];
+                buffer[6] = ping_id_buffer[3];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 3
+        public void CreateConnectionChannel(FlicButton flic_to_add, LatencyMode latency_mode, UInt16 auto_disconnect_time)
+        {
+            if (CONNECTED == false)
+            {
+                throw new Exception("Not connected to Daemon");
+            }
+            for (int i = 0; i < BUTTONS.Count; i++)
+            {
+                if (BUTTONS[i] == flic_to_add)
+                {
+                    throw new Exception("Duplicate found");
+                }
+            }
+
+            byte[] buffer = new byte[16];
+            //Header length
+            buffer[0] = 0x0E;
+            buffer[1] = 0x00;
+            //OP Code
+            buffer[2] = (byte)(Command.CmdCreateConnectionChannel);
+            //Handle
+            byte[] handle_buffer = BitConverter.GetBytes(flic_to_add.HANDLE);
+            Array.Reverse(handle_buffer);  //Make it little endian
+            buffer[3] = handle_buffer[0];
+            buffer[4] = handle_buffer[1];
+            buffer[5] = handle_buffer[2];
+            buffer[6] = handle_buffer[3];
+
+            //BT Address
+            byte[] bt_address = flic_to_add.BT_ADDRESS.ADDRESS;
+            Array.Reverse(bt_address);
+            for (int i = 0; i < bt_address.Length; i++)
+            {
+                buffer[7 + i] = bt_address[i];
+            }
+
+            //Latency
+            buffer[13] = (byte)(latency_mode);
+
+            //Auto-Disconnect Time
+            byte[] auto_disconnect_time_buffer = BitConverter.GetBytes(auto_disconnect_time);
+            buffer[14] = auto_disconnect_time_buffer[0];
+            buffer[15] = auto_disconnect_time_buffer[1];
+
+            try
+            {
+                SOCKET.Send(buffer, buffer.Length, 0);
+                BUTTONS.Add(flic_to_add);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 4
+        public void RemoveConnectionChannel(FlicButton flic_to_remove)
+        {
+            try
+            {
+                byte[] buffer = new byte[7];
+                //Header length
+                buffer[0] = 0x05;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdRemoveConnectionChannel);
+                //Handle
+                byte[] handle_buffer = BitConverter.GetBytes(flic_to_remove.HANDLE);
+                Array.Reverse(handle_buffer);  //Make it little endian
+                buffer[3] = handle_buffer[0];
+                buffer[4] = handle_buffer[1];
+                buffer[5] = handle_buffer[2];
+                buffer[6] = handle_buffer[3];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 5
+        public void ForceDisconnect(FlicButton flic_to_remove)
+        {
+            try
+            {
+                byte[] buffer = new byte[9];
+                //Header length
+                buffer[0] = 0x09;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdForceDisconnect);
+                //Bluetooth Address                
+                buffer[3] = flic_to_remove.BT_ADDRESS.ADDRESS[0];
+                buffer[4] = flic_to_remove.BT_ADDRESS.ADDRESS[1];
+                buffer[5] = flic_to_remove.BT_ADDRESS.ADDRESS[2];
+                buffer[6] = flic_to_remove.BT_ADDRESS.ADDRESS[3];
+                buffer[7] = flic_to_remove.BT_ADDRESS.ADDRESS[4];
+                buffer[8] = flic_to_remove.BT_ADDRESS.ADDRESS[5];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 6
+        public void ChangeModeParameters(FlicButton flic_to_remove, LatencyMode latency_mode, Int16 auto_disconnect_time)
+        {
+            try
+            {
+                byte[] buffer = new byte[10];
+                //Header length
+                buffer[0] = 0x0A;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdChangeModeParameters);
+                //Handle              
+                byte[] handle_buffer = BitConverter.GetBytes(flic_to_remove.HANDLE);
+                Array.Reverse(handle_buffer);  //Make it little endian
+                buffer[3] = handle_buffer[0];
+                buffer[4] = handle_buffer[1];
+                buffer[5] = handle_buffer[2];
+                buffer[6] = handle_buffer[3];
+                //Latency mode
+                buffer[7] = (byte)(latency_mode);
+                //Auto disconnect time
+                byte[] auto_disconnect_time_buffer = BitConverter.GetBytes(auto_disconnect_time);
+                Array.Reverse(auto_disconnect_time_buffer);  //Make it little endian
+                buffer[3] = auto_disconnect_time_buffer[0];
+                buffer[4] = auto_disconnect_time_buffer[1];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        // OP = 7
+        public void Ping(UInt32 ping_id)
+        {
+            try
+            {
+                byte[] buffer = new byte[7];
+                //Header length
+                buffer[0] = 0x05;
+                buffer[1] = 0x00;
+                //OP Code
+                buffer[2] = (byte)(Command.CmdPing);
+                //Ping ID
+                byte[] ping_id_buffer = BitConverter.GetBytes(ping_id);
+                Array.Reverse(ping_id_buffer);
+                buffer[3] = ping_id_buffer[0];
+                buffer[4] = ping_id_buffer[1];
+                buffer[5] = ping_id_buffer[2];
+                buffer[6] = ping_id_buffer[3];
+                //Send data
+                SOCKET.Send(buffer, buffer.Length, 0);
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+        #endregion
 
         private void Listen()
         {
@@ -88,183 +345,36 @@ namespace FlicSharp
                     case (byte)(Event.EvtPingResponse): Process_EvtPingResponse(data_buffer); break;
                     default: Console.WriteLine("Unknown"); break;
                 }
-
-                #region
-                /*Console.WriteLine(DateTime.Now.ToString() + ": Antwort");
-                for (int k = 0; k < bytes_received; k++)
-                {
-                    Console.WriteLine(recv_buffer[k]);
-                }
-
-                for (int i = 0; i < periods; i++)
-                {
-                    byte[] handle_buffer = new byte[4];
-                    for (int j = 0; j < 4; j++)
-                    {
-                        handle_buffer[j] = recv_buffer[i * 13 + j + 3];
-                    }
-                    Array.Reverse(handle_buffer);
-                    uint handle = BitConverter.ToUInt32(handle_buffer, 0);    //Button handle
-                    byte op_code = recv_buffer[i * 13 + 2];
-                    //OP Code
-                    /*if (op_code == 4 || op_code == 5 || op_code == 6 || op_code == 7)
-                    {
-                        foreach (FlicButton fb in BUTTONS)
-                        {
-                            if (handle == fb.HANDLE)
-                            {
-                                fb.LAST_PRESSES.Add(op_code);
-                                break;
-                            }
-                        }
-                    }
-
-                    switch (op_code)
-                    {
-                        case (byte)(Event.EvtAdvertisementPacket): Console.WriteLine("EvtAdvertisementPacket"); break;
-                        case (byte)(Event.EvtCreateConnectionChannelResponse): Console.WriteLine("EvtCreateConnectionChannelResponse"); Console.WriteLine(Process_EvtCreateConnectionChannelResponse(recv_buffer)); break;
-                        case (byte)(Event.EvtConnectionStatusChanged): Console.WriteLine("EvtConnectionStatusChanged"); Console.WriteLine(Process_EvtConnectionStatusChanged(recv_buffer)); break;
-                        case (byte)(Event.EvtConnectionChannelRemoved): Console.WriteLine("EvtConnectionChannelRemoved"); Console.WriteLine(Process_EvtConnectionChannelRemoved(recv_buffer)); break;
-                        case (byte)(Event.EvtButtonUpOrDown): Console.WriteLine("EvtButtonUpOrDown"); break;
-                        case (byte)(Event.EvtButtonClickOrHold): Console.WriteLine("EvtButtonClickOrHold"); break;
-                        case (byte)(Event.EvtButtonSingleOrDoubleClick): Console.WriteLine("EvtButtonSingleOrDoubleClick"); break;
-                        case (byte)(Event.EvtButtonSingleOrDoubleClickOrHold): Console.WriteLine("EvtButtonSingleOrDoubleClickOrHold"); break;
-                        case (byte)(Event.EvtNewVerifiedButton): Console.WriteLine("EvtNewVerifiedButton"); break;
-                        case (byte)(Event.EvtGetInfoResponse): Console.WriteLine("EvtGetInfoResponse"); break;
-                        case (byte)(Event.EvtNoSpaceForNewConnection): Console.WriteLine("EvtNoSpaceForNewConnection"); break;
-                        case (byte)(Event.EvtGotSpaceForNewConnection): Console.WriteLine("EvtGotSpaceForNewConnection"); break;
-                        case (byte)(Event.EvtBluetoothControllerStateChange): Console.WriteLine("EvtBluetoothControllerStateChange"); break;
-                        case (byte)(Event.EvtPingResponse): Console.WriteLine("EvtPingResponse"); break;
-                        default: Console.WriteLine("Unknown"); break;
-                    }*/
-                #endregion
             }
-            #region old
-            /*foreach (FlicButton fb in BUTTONS)
-            {
-                //Hold
-                if (fb.LAST_PRESSES.Count >= 8)
-                {
-                    if (fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 8] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 7] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 6] == 5 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 5] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 4] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 3] == 5 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 2] == 6 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 1] == 7)
-                    {
-                        Hold(fb);
-                        fb.LAST_PRESSES.Clear();
-                    }else
-                    {
-                        fb.LAST_PRESSES.Clear();
-                    }
-                }
-                //Single and Double Presses
-                else if (fb.LAST_PRESSES.Count >= 5)
-                {
-                    if (fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 5] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 4] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 3] == 5 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 2] == 6 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 1] == 7)
-                    {
-                        SinglePress(fb);
-                        fb.LAST_PRESSES.Clear();
-                    }
-                    if (fb.LAST_PRESSES.Count == 5 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 5] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 4] == 5 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 3] == 7 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 2] == 4 &&
-                        fb.LAST_PRESSES[fb.LAST_PRESSES.Count - 1] == 6)
-                    {
-                        DoublePress(fb);
-                        fb.LAST_PRESSES.Clear();
-                    }
-                }                    
-            }*/
-            #endregion
         }
 
         #region EvtParser
         //To Be Done OP = 0
         private void Process_EvtAdvertisementPacket(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtAdvertisementPacket - To be Done!");
+            EvtAdvertisementPacket eav = new EvtAdvertisementPacket(receive_buffer);
+            AdvertisementPacket(eav);
         }
 
         //OP = 1
         private void Process_EvtCreateConnectionChannelResponse(byte[] receive_buffer)
         {
-            //string info = "";
-
-            ////Connection Channel Identifier
-            //info += "Connection Channel Identifier: ";
-            //byte[] channel_identifier = new byte[] { receive_buffer[1], receive_buffer[2], receive_buffer[3], receive_buffer[4] };
-            //Array.Reverse(channel_identifier);
-            //info += BitConverter.ToUInt32(channel_identifier, 0);
-            //info += "\n";
-
-            ////Create Connection Channel Error
-            //info += "Create Connection Channel Error: ";
-            //switch (receive_buffer[5])
-            //{
-            //    case 0: info += "No Error"; break;
-            //    case 1: info += "Max Pending Connections Reached"; break;
-            //    default: info += "Unknown"; break;
-            //}
-            //info += "\n";
-
-            ////Connection Status
-            //info += "Connection Status: ";
-            //switch (receive_buffer[6])
-            //{
-            //    case 0: info += "Disconnected"; break;
-            //    case 1: info += "Connected"; break;
-            //    case 2: info += "Ready"; break;
-            //    default: info += "Unknown"; break;
-            //}
-
             EvtCreateConnectionChannelResponse eccr = new EvtCreateConnectionChannelResponse(receive_buffer);
-            Console.WriteLine(eccr.ToString());
+            CreateConnectionChannelResponse(eccr);
         }
 
         //OP = 2
         private void Process_EvtConnectionStatusChanged(byte[] receive_buffer)
         {
             EvtConnectionStatusChanged ecsc = new EvtConnectionStatusChanged(receive_buffer);
-            Console.WriteLine(ecsc.ToString());
+            ConnectionStatusChanged(ecsc);
         }
 
         //OP = 3
         private void Process_EvtConnectionChannelRemoved(byte[] receive_buffer)
         {
-            string info = "";
-
-            //Connection Channel Identifier
-            info += "Connection Channel Identifier: ";
-            byte[] channel_identifier = new byte[] { receive_buffer[1], receive_buffer[2], receive_buffer[3], receive_buffer[4] };
-            Array.Reverse(channel_identifier);
-            info += BitConverter.ToUInt32(channel_identifier, 0);
-            info += "\n";
-
-            //Connection Status
-            info += "Removed Reason: ";
-            switch (receive_buffer[5])
-            {
-                case 0: info += "Removed By ThisClient"; break;
-                case 1: info += "Force Disconnected By This Client"; break;
-                case 2: info += "Force Disconnected By Other Client"; break;
-                case 3: info += "Button Is Private"; break;
-                case 4: info += "Verify Timeout"; break;
-                case 5: info += "Internet Backend Error"; break;
-                case 6: info += "Invalid Data"; break;
-                default: info += "Unknown"; break;
-            }
-
-            Console.WriteLine(info);
+            EvtConnectionChannelRemoved eccr = new EvtConnectionChannelRemoved(receive_buffer);
+            ConnectionChannelRemoved(eccr);
         }
 
         //OP = 4
@@ -278,7 +388,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebuod.CLICK_TYPE);
                 }
             }
-            //Console.WriteLine(DateTime.Now.ToString() + ": EvtButtonUpOrDown - " + ebuod.ToString());            
+            ButtonUpOrDown(ebuod);           
         }
 
         //OP = 5
@@ -292,7 +402,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebcoh.CLICK_TYPE);
                 }
             }
-            //Console.WriteLine(DateTime.Now.ToString() + ": EvtButtonClickOrHold - " + ebcoh.ToString());
+            ButtonClickOrHold(ebcoh);
         }
 
         //OP = 6
@@ -306,7 +416,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebsodc.CLICK_TYPE);
                 }
             }
-            //Console.WriteLine(DateTime.Now.ToString() + ": EvtButtonSingleOrDoubleClick - " + ebsodc);
+            ButtonSingleOrDoubleClick(ebsodc);
         }
 
         //OP = 7
@@ -320,132 +430,59 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebsodcoh.CLICK_TYPE);
                 }
             }
-            //Console.WriteLine(DateTime.Now.ToString() + ": EvtButtonSingleOrDoubleClickOrHold - " + ebsodcoh.ToString());
+            ButtonSingleOrDoubleClickOrHold(ebsodcoh);
         }
 
         //To Be Done OP = 8
         private void Process_EvtNewVerifiedButton(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtNewVerifiedButton");
-            for (int i = 0; i < receive_buffer.Length; i++)
-            {
-                Console.WriteLine("{0:X}", receive_buffer[i]);
-            }
+            EvtNewVerifiedButton envb = new EvtNewVerifiedButton(receive_buffer);
+            NewVerifiedButton(envb);            
         }
 
         //OP = 9
         private void Process_EvtGetInfoResponse(byte[] receive_buffer)
         {
             EvtGetInfoResponse egir = new EvtGetInfoResponse(receive_buffer);
-            Info(egir);
+            GetInfoResponse(egir);
         }        
 
         //To Be Done OP = 10
         private void Process_EvtNoSpaceForNewConnection(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtNoSpaceForNewConnection");
-            for (int i = 0; i < receive_buffer.Length; i++)
-            {
-                Console.WriteLine("{0:X}", receive_buffer[i]);
-            }
+            EvtNoSpaceForNewConnection ensfnc = new EvtNoSpaceForNewConnection(receive_buffer);
+            NoSpaceForNewConnection(ensfnc);
         }
 
         //To Be Done OP = 11
         private void Process_EvtGotSpaceForNewConnection(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtGotSpaceForNewConnection");
-            for (int i = 0; i < receive_buffer.Length; i++)
-            {
-                Console.WriteLine("{0:X}", receive_buffer[i]);
-            }
+            EvtGotSpaceForNewConnection egsfnc = new EvtGotSpaceForNewConnection(receive_buffer);
+            GotSpaveForNewConnection(egsfnc);
         }
 
         //To Be Done OP = 12
         private void Process_EvtBluetoothControllerStateChange(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtBluetoothControllerStateChange");
-            for (int i = 0; i < receive_buffer.Length; i++)
-            {
-                Console.WriteLine("{0:X}", receive_buffer[i]);
-            }
+            EvtBluetoothControllerStateChange ebcsc = new EvtBluetoothControllerStateChange(receive_buffer);
+            BluetoothControllerStateChange(ebcsc);
         }
 
         //To Be Done OP = 13
         private void Process_EvtPingResponse(byte[] receive_buffer)
         {
-            Console.WriteLine("EvtPingResponse");
-            for (int i = 0; i < receive_buffer.Length; i++)
-            {
-                Console.WriteLine("{0:X}", receive_buffer[i]);
-            }
+            EvtPingResponse epr = new EvtPingResponse(receive_buffer);
+            PingResponse(epr);
         }
         #endregion
 
         //To Do
         public void RestoreConfiguration()
         {
-            //Used to read the actual configuration and add flic buttons here
-        }
+            throw new NotImplementedException();
+        }        
 
-        public void ConnectFlic(FlicButton flic_to_add, LatencyMode latency_mode, UInt16 auto_disconnect_time)
-        {
-            if (CONNECTED == false)
-            {
-                throw new Exception("Not connected to Daemon");
-            }
-            for (int i = 0; i < BUTTONS.Count; i++)
-            {
-                if (BUTTONS[i] == flic_to_add)
-                {
-                    throw new Exception("Duplicate found");
-                }
-            }
-
-            byte[] buffer = new byte[16];
-
-            //Header length
-            buffer[0] = 0x0E;
-            buffer[1] = 0x00;
-
-            //OP Code
-            buffer[2] = (byte)(Command.CmdCreateConnectionChannel);
-
-            //Handle
-            byte[] handle = BitConverter.GetBytes(flic_to_add.HANDLE);
-            Array.Reverse(handle);  //Make it little endian
-            for (int i = 0; i < handle.Length; i++)
-            {
-                buffer[3 + i] = handle[i];
-            }
-
-            //BT Address
-            byte[] bt_address = flic_to_add.BT_ADDRESS.ADDRESS;
-            Array.Reverse(bt_address);
-            for (int i = 0; i < bt_address.Length; i++)
-            {
-                buffer[7 + i] = bt_address[i];
-            }
-
-            //Latency
-            buffer[13] = (byte)(latency_mode);
-
-            //Auto-Disconnect Time
-            byte[] auto_disconnect_time_buffer = BitConverter.GetBytes(auto_disconnect_time);
-            buffer[14] = auto_disconnect_time_buffer[0];
-            buffer[15] = auto_disconnect_time_buffer[1];
-
-            try
-            {
-                SOCKET.Send(buffer, buffer.Length, 0);
-                BUTTONS.Add(flic_to_add);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public string GetInfo()
+        public override string ToString()
         {
             string info = "";
             for (int i = 0; i < BUTTONS.Count; i++)

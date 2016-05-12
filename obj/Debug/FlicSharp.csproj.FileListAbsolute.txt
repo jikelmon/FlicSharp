@@ -3,3 +3,8 @@ F:\FlicSharp-master\FlicSharp\bin\Debug\FlicLib.pdb
 F:\FlicSharp-master\FlicSharp\obj\Debug\FlicSharp.csprojResolveAssemblyReference.cache
 F:\FlicSharp-master\FlicSharp\obj\Debug\FlicLib.dll
 F:\FlicSharp-master\FlicSharp\obj\Debug\FlicLib.pdb
+C:\Users\nicol\Documents\GitHub\FlicSharp\obj\Debug\FlicSharp.csprojResolveAssemblyReference.cache
+C:\Users\nicol\Documents\GitHub\FlicSharp\bin\Debug\FlicSharp.dll
+C:\Users\nicol\Documents\GitHub\FlicSharp\bin\Debug\FlicSharp.pdb
+C:\Users\nicol\Documents\GitHub\FlicSharp\obj\Debug\FlicSharp.dll
+C:\Users\nicol\Documents\GitHub\FlicSharp\obj\Debug\FlicSharp.pdb

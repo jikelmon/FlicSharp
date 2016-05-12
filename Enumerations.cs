@@ -6,10 +6,6 @@ using System.Threading.Tasks;
 
 namespace FlicSharp
 {
-    public class CommandBuilder
-    {
-    }
-
     public enum CreateConnectionChannelError
     {
         NoError,
@@ -86,19 +82,19 @@ namespace FlicSharp
 
     public enum Event
     {
-        EvtAdvertisementPacket = 0,
-        EvtCreateConnectionChannelResponse = 1,
-        EvtConnectionStatusChanged = 2,
-        EvtConnectionChannelRemoved = 3,
-        EvtButtonUpOrDown = 4,
-        EvtButtonClickOrHold = 5,
-        EvtButtonSingleOrDoubleClick = 6,
-        EvtButtonSingleOrDoubleClickOrHold = 7,
-        EvtNewVerifiedButton = 8,
-        EvtGetInfoResponse = 9,
-        EvtNoSpaceForNewConnection = 10,
-        EvtGotSpaceForNewConnection = 11,
-        EvtBluetoothControllerStateChange = 12,
-        EvtPingResponse = 13
+        EvtAdvertisementPacket,
+        EvtCreateConnectionChannelResponse,
+        EvtConnectionStatusChanged,
+        EvtConnectionChannelRemoved,
+        EvtButtonUpOrDown,
+        EvtButtonClickOrHold,
+        EvtButtonSingleOrDoubleClick,
+        EvtButtonSingleOrDoubleClickOrHold,
+        EvtNewVerifiedButton,
+        EvtGetInfoResponse,
+        EvtNoSpaceForNewConnection,
+        EvtGotSpaceForNewConnection,
+        EvtBluetoothControllerStateChange,
+        EvtPingResponse
     }
 }
