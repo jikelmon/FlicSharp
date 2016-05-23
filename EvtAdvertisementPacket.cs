@@ -27,7 +27,7 @@ namespace FlicSharp
             string mac_address = "";
             for (int i = 10; i > 4; i--)
             {
-                mac_address += String.Format("{0:X}", data_buffer[i]);
+                mac_address += String.Format("{0:X2}", data_buffer[i]);
                 if (i != 5)
                 {
                     mac_address += ":";
