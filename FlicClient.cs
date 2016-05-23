@@ -67,6 +67,19 @@ namespace FlicSharp
                 throw ex;
             }
         }
+        
+        public void DisconnectFromDaemon()
+        {
+            try
+            {
+                CONNECTED = false;
+                SOCKET.Shutdown(SocketShutdown.Both);                
+            }
+            catch (Exception)
+            {
+                throw new Exception("Error shutting down the socket connection to daemon!");
+            }
+        }
 
         #region Commands
         // OP = 0
