@@ -353,28 +353,28 @@ namespace FlicSharp
         private void Process_EvtAdvertisementPacket(byte[] receive_buffer)
         {
             EvtAdvertisementPacket eav = new EvtAdvertisementPacket(receive_buffer);
-            AdvertisementPacket(eav);
+            AdvertisementPacket?.Invoke(eav);
         }
 
         //OP = 1
         private void Process_EvtCreateConnectionChannelResponse(byte[] receive_buffer)
         {
             EvtCreateConnectionChannelResponse eccr = new EvtCreateConnectionChannelResponse(receive_buffer);
-            CreateConnectionChannelResponse(eccr);
+            CreateConnectionChannelResponse?.Invoke(eccr);
         }
 
         //OP = 2
         private void Process_EvtConnectionStatusChanged(byte[] receive_buffer)
         {
             EvtConnectionStatusChanged ecsc = new EvtConnectionStatusChanged(receive_buffer);
-            ConnectionStatusChanged(ecsc);
+            ConnectionStatusChanged?.Invoke(ecsc);
         }
 
         //OP = 3
         private void Process_EvtConnectionChannelRemoved(byte[] receive_buffer)
         {
             EvtConnectionChannelRemoved eccr = new EvtConnectionChannelRemoved(receive_buffer);
-            ConnectionChannelRemoved(eccr);
+            ConnectionChannelRemoved?.Invoke(eccr);            
         }
 
         //OP = 4
@@ -388,7 +388,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebuod.CLICK_TYPE);
                 }
             }
-            ButtonUpOrDown(ebuod);           
+            ButtonUpOrDown?.Invoke(ebuod);
         }
 
         //OP = 5
@@ -402,7 +402,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebcoh.CLICK_TYPE);
                 }
             }
-            ButtonClickOrHold(ebcoh);
+            ButtonClickOrHold?.Invoke(ebcoh);
         }
 
         //OP = 6
@@ -416,7 +416,7 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebsodc.CLICK_TYPE);
                 }
             }
-            ButtonSingleOrDoubleClick(ebsodc);
+            ButtonSingleOrDoubleClick?.Invoke(ebsodc);
         }
 
         //OP = 7
@@ -430,49 +430,49 @@ namespace FlicSharp
                     fb.AddPressToHistory(ebsodcoh.CLICK_TYPE);
                 }
             }
-            ButtonSingleOrDoubleClickOrHold(ebsodcoh);
+            ButtonSingleOrDoubleClickOrHold?.Invoke(ebsodcoh);
         }
 
         //To Be Done OP = 8
         private void Process_EvtNewVerifiedButton(byte[] receive_buffer)
         {
             EvtNewVerifiedButton envb = new EvtNewVerifiedButton(receive_buffer);
-            NewVerifiedButton(envb);            
+            NewVerifiedButton?.Invoke(envb);            
         }
 
         //OP = 9
         private void Process_EvtGetInfoResponse(byte[] receive_buffer)
         {
             EvtGetInfoResponse egir = new EvtGetInfoResponse(receive_buffer);
-            GetInfoResponse(egir);
+            GetInfoResponse?.Invoke(egir);
         }        
 
         //To Be Done OP = 10
         private void Process_EvtNoSpaceForNewConnection(byte[] receive_buffer)
         {
             EvtNoSpaceForNewConnection ensfnc = new EvtNoSpaceForNewConnection(receive_buffer);
-            NoSpaceForNewConnection(ensfnc);
+            NoSpaceForNewConnection?.Invoke(ensfnc);
         }
 
         //To Be Done OP = 11
         private void Process_EvtGotSpaceForNewConnection(byte[] receive_buffer)
         {
             EvtGotSpaceForNewConnection egsfnc = new EvtGotSpaceForNewConnection(receive_buffer);
-            GotSpaveForNewConnection(egsfnc);
+            GotSpaveForNewConnection?.Invoke(egsfnc);
         }
 
         //To Be Done OP = 12
         private void Process_EvtBluetoothControllerStateChange(byte[] receive_buffer)
         {
             EvtBluetoothControllerStateChange ebcsc = new EvtBluetoothControllerStateChange(receive_buffer);
-            BluetoothControllerStateChange(ebcsc);
+            BluetoothControllerStateChange?.Invoke(ebcsc);
         }
 
         //To Be Done OP = 13
         private void Process_EvtPingResponse(byte[] receive_buffer)
         {
             EvtPingResponse epr = new EvtPingResponse(receive_buffer);
-            PingResponse(epr);
+            PingResponse?.Invoke(epr);
         }
         #endregion
 

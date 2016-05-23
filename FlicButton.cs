@@ -45,7 +45,7 @@ namespace FlicSharp
                     PRESS_HISTORY[PRESS_HISTORY.Count - 2] == ClickType.ButtonSingleClick &&
                     PRESS_HISTORY[PRESS_HISTORY.Count - 1] == ClickType.ButtonSingleClick)
                 {
-                    SinglePressed(this);
+                    SinglePressed?.Invoke(this);
                     PRESS_HISTORY.Clear();
                 }
             }
@@ -61,7 +61,7 @@ namespace FlicSharp
                     PRESS_HISTORY[PRESS_HISTORY.Count - 2] == ClickType.ButtonHold &&
                     PRESS_HISTORY[PRESS_HISTORY.Count - 1] == ClickType.ButtonHold)
                 {
-                    Hold(this);
+                    Hold?.Invoke(this);
                     PRESS_HISTORY.Clear();
                 }
             }
@@ -82,7 +82,7 @@ namespace FlicSharp
                     PRESS_HISTORY[PRESS_HISTORY.Count - 2] == ClickType.ButtonDoubleClick &&
                     PRESS_HISTORY[PRESS_HISTORY.Count - 1] == ClickType.ButtonDoubleClick)
                 {
-                    DoublePressed(this);
+                    DoublePressed?.Invoke(this);
                     PRESS_HISTORY.Clear();
                 }
             }
